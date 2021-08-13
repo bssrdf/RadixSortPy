@@ -1,4 +1,4 @@
-## A module to sort lists of (positive) integers using radix sort algorithm
+## A module to sort lists of 32-bit signed integers using radix sort algorithm
 
 ### Sorting 100000, 1000000 and 10000000 integers, Radix Sort outperforms python's built-in Tim-Sort by 5x to 10x
            

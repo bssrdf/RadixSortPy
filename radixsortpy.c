@@ -1,9 +1,12 @@
 #define PY_SSIZE_T_CLEAN
 //#include <stdlib.h>
+#include <limits.h>
+#include <stdio.h>
 #include <Python.h>
 
-void insertion_sort(int *array, int offset, int end) {
-    int x, y, temp;
+void insertion_sort(uint32_t *array, int offset, int end) {
+    int x, y;
+    uint32_t temp;
     for (x=offset; x<end; ++x) {
         for (y=x; y>offset && array[y-1]>array[y]; y--) {
             temp = array[y];
@@ -13,8 +16,9 @@ void insertion_sort(int *array, int offset, int end) {
     }
 }
 
-void radix_sort(int *array, int offset, int end, int shift) {
-    int x, y, value, temp;
+void radix_sort(uint32_t *array, int offset, int end, int shift) {
+    int x, y; 
+    uint32_t value, temp;
     int last[256] = { 0 }, pointer[256];
 
     for (x=offset; x<end; ++x) {
@@ -70,22 +74,23 @@ static PyObject* RadixSort_sortList(PyObject* self, PyObject* args){
   long length = PyList_Size(listObj);
 
   //iterate over all the elements
-  long i, sum =0;
-  int *array = (int *)malloc(sizeof(int) * length);
+  long i;
+  uint32_t *array = (uint32_t *)malloc(sizeof(uint32_t) * length);
 
   for(i = 0; i < length; i++){
     //get an element out of the list - the element is also a python objects
     PyObject* temp = PyList_GetItem(listObj, i);
     //we know that object represents an integer - so convert it into C long
     int elem = (int) PyLong_AsLong(temp);
-    array[i] = elem;
+    array[i] = (uint32_t)(elem + INT_MAX);
   }
 
   radix_sort(array, 0, length, 24); 
 
   for(i = 0; i < length; i++){    
     //PyList_SetItem(listObj, i, PyLong_FromLong((long)array[i]));
-    PyList_SetItem(listObj, i, Py_BuildValue("i", array[i]));
+    int tmp = (int)(array[i]-INT_MAX);
+    PyList_SetItem(listObj, i, Py_BuildValue("i", tmp));
   }
 
   free(array);
