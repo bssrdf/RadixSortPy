@@ -169,6 +169,12 @@ inline uint64_t IFloatFlip(uint64_t f)
 	return f ^ mask;
 }
 
+inline void IFloatFlipX(uint64_t *f)
+{
+	uint64_t mask = ((*f >> 63) - 1) | 0x8000000000000000;
+	*f ^= mask;
+}
+
 //This is the function that is called from your python code
 static PyObject* RadixSort_sortList(PyObject* self, PyObject* args){
 
@@ -224,8 +230,7 @@ static PyObject* RadixSort_sortList(PyObject* self, PyObject* args){
 
   if (isFloat) {
       for(i = 0; i < length; i++){    
-        uint64_t tmp = IFloatFlip(array64[i]);
-        array64[i] = tmp;
+        IFloatFlipX(&array64[i]);
       }      
       memcpy(fsorted, array64, sizeof(double) * length);
   }
