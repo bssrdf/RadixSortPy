@@ -145,18 +145,6 @@ inline uint32_t IFloatFlip(uint32_t f)
 }*/
 
 
-inline uint32_t FloatFlip(uint32_t f)
-{
-	uint32_t mask = -(int32_t)(f >> 31) | 0x80000000;
-	return f ^ mask;
-}
-
-inline void FloatFlipX(uint32_t *f)
-{
-	uint32_t mask = -(int32_t)(*f >> 31) | 0x80000000;
-	*f ^= mask;
-}
-
 // ================================================================================================
 // flip a float back (invert FloatFlip)
 //  signed was flipped from above, so:
@@ -190,7 +178,6 @@ static PyObject* RadixSort_sortList(PyObject* self, PyObject* args){
 
   //iterate over all the elements
   long i;
-  uint32_t* array;
   uint64_t* array64;
   double *farray, *fsorted; 
   isFloat = PyFloat_Check(PyList_GetItem(listObj, 0));
@@ -200,33 +187,29 @@ static PyObject* RadixSort_sortList(PyObject* self, PyObject* args){
       array64 = (uint64_t*) farray;
   }
   else {
-      array = (uint32_t *)malloc(sizeof(uint32_t) * length);
+      array64 = (uint64_t *)malloc(sizeof(uint64_t) * length);
   }
-  for(i = 0; i < length; i++){
-    //get an element out of the list - the element is also a python objects
-    PyObject* temp = PyList_GetItem(listObj, i);
-    //we know that object represents an integer - so convert it into C long
-    
-    if (isFloat) {        
-        farray[i] = PyFloat_AsDouble(temp);
-        uint64_t fi = array64[i];
-        uint64_t mask = -(int64_t)(fi >> 63) | 0x8000000000000000;
-        array64[i] ^= mask;    
-    }
-    else{ 
-        int elem = (int) PyLong_AsLong(temp);
-        array[i] = (uint32_t)(elem + INT_MAX);
-    }
-    
-  }
-  
 
-  if (isFloat){
-      radix_sort64(array64, 0, length, 56); 
+  if (isFloat) {        
+        for(i = 0; i < length; i++){
+            //get an element out of the list - the element is also a python objects
+            PyObject* temp = PyList_GetItem(listObj, i);    
+            farray[i] = PyFloat_AsDouble(temp);
+            uint64_t mask = -(int64_t)(array64[i] >> 63) | 0x8000000000000000;
+            array64[i] ^= mask;    
+        }
   }
-  else{
-      radix_sort(array, 0, length, 24); 
+  else{ 
+      for(i = 0; i < length; i++){
+         //get an element out of the list - the element is also a python objects
+         PyObject* temp = PyList_GetItem(listObj, i);    
+         long elem = PyLong_AsLong(temp);        
+         array64[i] = (uint64_t)(elem + LONG_MAX);
+      }
   }
+    
+  
+  radix_sort64(array64, 0, length, 56); 
 
   if (isFloat) {
       for(i = 0; i < length; i++){    
@@ -235,24 +218,20 @@ static PyObject* RadixSort_sortList(PyObject* self, PyObject* args){
       memcpy(fsorted, array64, sizeof(double) * length);
   }
 
-  for(i = 0; i < length; i++){    
     //PyList_SetItem(listObj, i, PyLong_FromLong((long)array[i]));
-    if (isFloat){
-        PyList_SetItem(listObj, i, Py_BuildValue("d", fsorted[i]));
-    }
-    else{
-        int tmp = (int)(array[i]-INT_MAX);
-        PyList_SetItem(listObj, i, Py_BuildValue("i", tmp));
-    }
-  }
-
-  if(isFloat){
-     free(array64);
-     free(fsorted);
+  if (isFloat){
+       for(i = 0; i < length; i++)    
+           PyList_SetItem(listObj, i, Py_BuildValue("d", fsorted[i]));
   }
   else{
-     free(array);
+      for(i = 0; i < length; i++){    
+        long tmp = (long)(array64[i]-LONG_MAX);
+        PyList_SetItem(listObj, i, Py_BuildValue("i", tmp));
+      }
   }
+
+  free(array64); 
+  if (isFloat) free(fsorted);
   
   //value returned back to python code - another python object
   //build value here converts the C long to a python integer  

@@ -30,6 +30,9 @@ if __name__=='__main__':
         for i in ls2:
             assert last <= i
             last = i
+        for i,j in zip(ls,ls2):
+            assert i == j
+
     print("Sorting DOUBLEs")
     for value in 1000, 10000, 100000, 1000000, 10000000:
     #for value in [10]:
@@ -56,4 +59,6 @@ if __name__=='__main__':
         for i in ls2:
             assert last <= i
             last = i
+        for i,j in zip(ls,ls2):
+            assert i == j
         
